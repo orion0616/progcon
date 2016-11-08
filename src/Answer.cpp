@@ -46,7 +46,7 @@ Action Answer::getNextAction(const Stage& aStage)
                     continue;
                 float rot = theta1-epsilon;
                 float angle = a1loc.rotSign(a2loc) > 0 ? rot : -rot;
-                float length = Math::Max(a1loc.length(), a2loc.length());
+                float length = Math::Min(a1loc.length(), a2loc.length());
                 if(length > maxlength) {
                     targetShootPos = a1loc.getRotatedRad(angle)+shipLocation;
                     maxlength = length;
