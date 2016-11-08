@@ -28,28 +28,49 @@ void Answer::init(const Stage& aStage)
 /// 各ターンでの行動を返します。
 /// @param[in] aStage 現在ステージの情報。
 /// @return これから行う行動を表す Action クラス。
+
+float calcTheta(Asteroid a, Vector2 v) {
+    float dist = a.pos().dist(v);
+    float r = a.radius();
+    float theta = Math::ACos(Math::Sqrt(dist*dist-r*r)/dist);
+    return Math::Abs(theta);
+}
+
 Action Answer::getNextAction(const Stage& aStage)
 {
     // レーザーが発射できるときは、レーザーを発射します。
-    // レーザーが発射できないときは、移動します。
+    // レーザーが発射できないときは、移動します
     Ship ship = aStage.ship();
     Vector2 shipLocation = ship.pos();
-    Vector2 farest = Vector2(0,0);
     Vector2 nearest = Vector2(100000,100000);
+    float epsilon = 0.0001;
     if(ship.canShoot()) {
-        float farLength = farest.dist(shipLocation);
         // 発射目標にする小惑星を決定します。
         Vector2 targetShootPos;
-        for(int i = aStage.asteroidCount() - 1; i >= 0; --i) {
-            if(aStage.asteroid(i).exists()) {
-                if(farLength < aStage.asteroid(i).pos().dist(shipLocation)){
-                    farest = aStage.asteroid(i).pos();
-                    farLength = farest.dist(shipLocation);
-                }
+        for(int i = 0; i < aStage.asteroidCount(); i++) {
+            Asteroid a1 = aStage.asteroid(i);
+            if(!a1.exists())
+                continue;
+            float theta1 = calcTheta(a1, shipLocation);
+            Vector2 a1loc = a1.pos() - shipLocation;
+            for(int j = i+1; j < aStage.asteroidCount(); j++) {
+                Asteroid a2 = aStage.asteroid(j);
+                if(!a2.exists()) 
+                    continue;
+                float theta2 = calcTheta(a2, shipLocation);
+                Vector2 a2loc = a2.pos() - shipLocation;
+                if(a1loc.angle(a2loc) < theta1 + theta2){
+                    if(a1loc.rotSign(a2loc) > 0)
+                        targetShootPos = a1loc.getRotatedRad(theta1-epsilon)+shipLocation;
+                    else
+                        targetShootPos = a1loc.getRotatedRad(-theta1+epsilon)+shipLocation;
+                    return Action::Shoot(targetShootPos);
+                }   
             }
+            targetShootPos = a1.pos();
         }
-        targetShootPos = farest;
         return Action::Shoot(targetShootPos);
+
     } else {
         float nearLength = nearest.dist(shipLocation);
         // 移動目標にする小惑星を決定します。
