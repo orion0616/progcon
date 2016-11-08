@@ -42,7 +42,8 @@ Action Answer::getNextAction(const Stage& aStage)
     // レーザーが発射できないときは、移動します
     Ship ship = aStage.ship();
     Vector2 shipLocation = ship.pos();
-    Vector2 nearest = Vector2(100000,100000);
+    Vector2 farest = shipLocation;
+    Vector2 nearest = Vector2(100000,100000) + shipLocation;
     float epsilon = 0.0001;
     if(ship.canShoot()) {
         // 発射目標にする小惑星を決定します。
@@ -67,9 +68,11 @@ Action Answer::getNextAction(const Stage& aStage)
                     return Action::Shoot(targetShootPos);
                 }   
             }
-            targetShootPos = a1.pos();
+            if(farest.dist(shipLocation) < a1.pos().dist(shipLocation)){
+                farest = a1.pos();
+            }
         }
-        return Action::Shoot(targetShootPos);
+        return Action::Shoot(farest);
 
     } else {
         float nearLength = nearest.dist(shipLocation);
@@ -88,10 +91,7 @@ Action Answer::getNextAction(const Stage& aStage)
     }
 }
 
-/// 各ステージ終了時に呼び出されます。
-/// @param[in] aStage 現在ステージの情報。
 void Answer::finalize(const Stage& aStage)
 {
 }
 } // namespace
-// EOF
